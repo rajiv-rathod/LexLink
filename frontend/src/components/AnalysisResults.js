@@ -1,69 +1,55 @@
 import React from 'react';
 
 const AnalysisResults = ({ results }) => {
+  const { document, contentAnalysis, insights, metadata } = results || {};
   if (!results) return null;
 
   return (
-    <div className="analysis-results">
-      <h3>📊 Analysis Results</h3>
-      
-      <div className="result-section">
-        <h4>Document Overview</h4>
-        <p>{results.insights?.summary}</p>
-      </div>
+    <div className="results-card">
+      <h2>Analysis Results</h2>
 
-      <div className="result-section">
-        <h4>Detailed Analysis</h4>
+      <section>
+        <h3>Document</h3>
         <ul>
-          {results.insights?.keyPoints?.map((point, index) => (
-            <li key={index}>{point}</li>
-          ))}
+          <li><strong>Filename:</strong> {document?.filename}</li>
+          <li><strong>Type:</strong> {document?.type}</li>
+          <li><strong>Size:</strong> {Math.round((document?.size || 0) / 1024)} KB</li>
+          <li><strong>Uploaded:</strong> {new Date(document?.uploadDate).toLocaleString()}</li>
         </ul>
-      </div>
+      </section>
 
-      <div className="result-section">
-        <h4>Content Statistics</h4>
+      <section>
+        <h3>Content</h3>
         <ul>
-          <li>Words: {results.contentAnalysis?.wordCount}</li>
-          <li>Characters: {results.contentAnalysis?.charCount}</li>
-          <li>Lines: {results.contentAnalysis?.lineCount}</li>
-          <li>Type: {results.contentAnalysis?.docType}</li>
+          <li><strong>Type Guess:</strong> {contentAnalysis?.docType}</li>
+          <li><strong>Words:</strong> {contentAnalysis?.wordCount}</li>
+          <li><strong>Lines:</strong> {contentAnalysis?.lineCount}</li>
+          <li><strong>Personal Info:</strong> {contentAnalysis?.containsPersonalInfo ? 'Likely' : 'Not obvious'}</li>
+          <li><strong>Dates Present:</strong> {contentAnalysis?.containsDates ? 'Yes' : 'No'}</li>
+          <li><strong>Numbers Present:</strong> {contentAnalysis?.containsNumbers ? 'Yes' : 'No'}</li>
         </ul>
-      </div>
+        <p><strong>Preview:</strong> {contentAnalysis?.preview}</p>
+      </section>
 
-      <div className="result-section">
-        <h4>Recommendations</h4>
-        <ul>
-          {results.insights?.recommendations?.map((rec, index) => (
-            <li key={index}>{rec}</li>
-          ))}
-        </ul>
-      </div>
-
-      {results.contentAnalysis?.preview && (
-        <div className="result-section">
-          <h4>Content Preview</h4>
-          <div style={{
-            background: '#f8f9fa',
-            padding: '1rem',
-            borderRadius: '8px',
-            border: '1px solid #e9ecef',
-            maxHeight: '200px',
-            overflow: 'auto',
-            fontSize: '0.9em',
-            lineHeight: '1.4'
-          }}>
-            {results.contentAnalysis.preview}
-          </div>
-        </div>
+      {insights && (
+        <section>
+          <h3>Insights</h3>
+          <p>{insights.summary}</p>
+          <ul>
+            {insights.keyPoints?.map((k, i) => <li key={i}>{k}</li>)}
+          </ul>
+        </section>
       )}
 
-      <div className="metadata">
-        <p>Document: <strong>{results.document?.filename}</strong></p>
-        <p>Size: {(results.document?.size / 1024).toFixed(2)} KB</p>
-        <p>Type: {results.document?.type}</p>
-        <p>Analyzed on: {new Date().toLocaleString()}</p>
-      </div>
+      {metadata && (
+        <section>
+          <h3>Metadata</h3>
+          <ul>
+            <li><strong>Analysis ID:</strong> {metadata.analysisId}</li>
+            <li><strong>Model:</strong> {metadata.modelUsed}</li>
+          </ul>
+        </section>
+      )}
     </div>
   );
 };

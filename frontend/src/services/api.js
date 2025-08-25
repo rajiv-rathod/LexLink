@@ -1,62 +1,21 @@
-import axios from 'axios';
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
-const API_BASE_URL = 'https://humble-space-cod-jv7vqw7v7x9h5gx9-3001.app.github.dev/api';
+export async function analyzeDocument(file) {
+  const fd = new FormData();
+  fd.append("file", file);
 
+  const res = await fetch(`${API_BASE}/analyze`, { method: "POST", body: fd });
+  if (!res.ok) throw new Error(`Analyze failed: ${res.status}`);
+  return res.json();
+}
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30 second timeout
-});
-
-// Request interceptor to add auth token if available
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      // Server responded with error status
-      return Promise.reject(new Error(error.response.data.error || 'Server error'));
-    } else if (error.request) {
-      // Request made but no response received
-      return Promise.reject(new Error('Network error. Please check your connection.'));
-    } else {
-      // Something else happened
-      return Promise.reject(new Error('An unexpected error occurred.'));
-    }
-  }
-);
-
-export const analyzeDocument = (formData) => {
-  return api.post('/analyze', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }).then(response => response.data);
-};
-
-export const explainClause = (text) => {
-  return api.post('/explain', { text }).then(response => response.data);
-};
-
-export const askQuestion = (question, documentText) => {
-  return api.post('/ask', { question, documentText }).then(response => response.data);
-};
-
-export const healthCheck = () => {
-  return api.get('/health').then(response => response.data);
-};
-
-export default api;
+export async function explainWithGemini(text, context = "") {
+  const res = await fetch(`${API_BASE}/explain`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, context })
+  });
+  if (!res.ok) throw new Error(`Explain failed: ${res.status}`);
+  return res.json();
+}

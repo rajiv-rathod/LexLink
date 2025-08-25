@@ -1,68 +1,21 @@
-import React, { useState } from 'react';
-import Header from './components/Header';
-import FileUpload from './components/FileUpload';
-import AnalysisResults from './components/AnalysisResults';
-import Footer from './components/Footer';
-import './App.css';
+import React from "react";
+import Navbar from "./components/Navbar";
+import UploadForm from "./components/UploadForm";
 
-function App() {
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleAnalysisComplete = (result) => {
-    setAnalysisResult(result);
-    setError('');
-    setIsLoading(false);
-  };
-
-  const handleError = (errorMessage) => {
-    setError(errorMessage);
-    setAnalysisResult(null);
-    setIsLoading(false);
-  };
-
-  const handleAnalysisStart = () => {
-    setIsLoading(true);
-    setError('');
-  };
-
+export default function App() {
   return (
-    <div className="App">
-      <Header />
-      
-      <main className="main-content">
-        <div className="upload-container">
-          <h2 className="upload-title">Upload Legal Document</h2>
-          <p className="upload-subtitle">Upload a PDF, image, or text file to analyze with AI</p>
-          
-          <FileUpload 
-            onAnalysisComplete={handleAnalysisComplete}
-            onError={handleError}
-            isLoading={isLoading}
-          />
-          
-          {error && (
-            <div className="error-message">
-              ❌ {error}
-            </div>
-          )}
-
-          {isLoading && !error && (
-            <div className="loading">
-              Analyzing your document
-            </div>
-          )}
-        </div>
-
-        {analysisResult && (
-          <AnalysisResults results={analysisResult} />
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-700 text-gray-100">
+      <Navbar />
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-5xl font-bold mb-4 text-center">LexLink</h1>
+        <p className="text-lg text-center text-gray-200 mb-12">
+          Demystify your legal documents with AI-powered analysis.
+        </p>
+        <UploadForm />
       </main>
-
-      <Footer />
+      <footer className="text-center text-gray-300 py-6 text-sm">
+        © 2025 LexLink. All Rights Reserved.
+      </footer>
     </div>
   );
 }
-
-export default App;

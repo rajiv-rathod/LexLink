@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { analyzeDocument } from '../services/api';
 
-const FileUpload = ({ onAnalysisComplete, onError, isLoading }) => {
+const FileUpload = ({ onAnalysisComplete, onError, isLoading, setIsLoading }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef(null);
+  const resetKeyRef = useRef(0); // force-reset input after each analysis
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      onError('');
-    }
+  const accept = '.pdf,.txt,.png,.jpg,.jpeg';
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    onError?.('');
   };
 
   const handleDragOver = (e) => {
@@ -25,104 +29,68 @@ const FileUpload = ({ onAnalysisComplete, onError, isLoading }) => {
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.type === 'application/pdf' || 
-          file.type.startsWith('image/') || 
-          file.type === 'text/plain') {
-        setSelectedFile(file);
-        onError('');
-      } else {
-        onError('Please upload a PDF, image, or text file');
-      }
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!/^(application\/pdf|text\/plain|image\/(png|jpeg))$/.test(file.type)) {
+      onError?.('Unsupported file type. Use PDF, TXT, PNG, or JPG.');
+      return;
     }
+    setSelectedFile(file);
+    onError?.('');
   };
 
   const handleAnalyze = async () => {
     if (!selectedFile) {
-      onError('Please select a file first');
+      onError?.('Please select a file to analyze.');
       return;
     }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
-      console.log('Sending file to backend...');
-      
-      // Use the correct backend URL
-      const response = await fetch('https://humble-space-cod-jv7vqw7v7x9h5gx9-3001.app.github.dev/api/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error(`Server error: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('Analysis result received:', result);
-      onAnalysisComplete(result);
-    } catch (error) {
-      console.error('Analysis error:', error);
-      onError(error.message || 'Failed to analyze document. Please check if backend is running.');
+      setIsLoading(true);
+      const result = await analyzeDocument(selectedFile);
+      onAnalysisComplete?.(result);
+    } catch (err) {
+      console.error(err);
+      onError?.(err?.response?.data?.error || err.message || 'Analysis failed');
+    } finally {
+      setIsLoading(false);
+      // Reset input so the same file can be selected again on the next run
+      setSelectedFile(null);
+      resetKeyRef.current += 1;
+      if (inputRef.current) inputRef.current.value = '';
     }
-  };
-
-  const handleClearFile = () => {
-    setSelectedFile(null);
   };
 
   return (
-    <div className="file-upload-container">
-      <div 
-        className={`drag-drop-zone ${dragOver ? 'drag-over' : ''}`}
+    <div className="upload-card">
+      <div
+        className={`drop-zone ${dragOver ? 'drag-over' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => document.getElementById('file-input').click()}
       >
+        <p>Drop a file here or click to choose</p>
         <input
-          id="file-input"
+          key={resetKeyRef.current}
+          ref={inputRef}
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.txt,.text"
+          accept={accept}
           onChange={handleFileChange}
-          style={{ display: 'none' }}
         />
-        
-        {selectedFile ? (
-          <div className="file-selected">
-            <p>✅ <strong>{selectedFile.name}</strong></p>
-            <p>Size: {(selectedFile.size / 1024).toFixed(2)} KB</p>
-            <p>Type: {selectedFile.type}</p>
-            <button onClick={handleClearFile} className="clear-btn">
-              Change File
-            </button>
-          </div>
-        ) : (
-          <div className="upload-prompt">
-            <p>📁 Upload Legal Document</p>
-            <p>Drag & drop a file here, or click to select a file</p>
-            <p className="file-types">Supports: PDF, JPG, PNG, TXT files</p>
-          </div>
-        )}
       </div>
 
       {selectedFile && (
-        <button 
-          onClick={handleAnalyze} 
-          disabled={isLoading}
-          className="analyze-btn"
-        >
-          {isLoading ? '⏳ Analyzing Document...' : '🔍 Analyze Document'}
-        </button>
+        <div className="file-meta">
+          <strong>Selected:</strong> {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
+        </div>
       )}
+
+      <button
+        onClick={handleAnalyze}
+        disabled={isLoading || !selectedFile}
+        className="analyze-btn"
+      >
+        {isLoading ? '⏳ Analyzing…' : '🔍 Analyze Document'}
+      </button>
     </div>
   );
 };

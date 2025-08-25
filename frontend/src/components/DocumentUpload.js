@@ -1,62 +1,49 @@
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useState } from "react";
 
-const DocumentUpload = ({ onUpload, loading, error }) => {
+export default function UploadForm() {
   const [file, setFile] = useState(null);
-  
-  const onDrop = useCallback((acceptedFiles) => {
-    if (acceptedFiles && acceptedFiles.length > 0) {
-      setFile(acceptedFiles[0]);
-    }
-  }, []);
-  
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'text/plain': ['.txt']
-    },
-    multiple: false
-  });
-  
-  const handleUpload = () => {
-    if (file) {
-      onUpload(file);
-    }
+  const [result, setResult] = useState(null);
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("http://localhost:3001/api/analyze", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setResult(data);
   };
-  
+
   return (
-    <div className="upload-container">
-      <h2>Upload Legal Document</h2>
-      <p>Upload a PDF, image, or text file to analyze with AI</p>
-      
-      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
-        <input {...getInputProps()} />
-        {isDragActive ? (
-          <p>Drop the file here...</p>
-        ) : (
-          <p>Drag & drop a file here, or click to select a file</p>
-        )}
-      </div>
-      
-      {file && (
-        <div className="file-info">
-          <p>Selected file: {file.name}</p>
-          <button 
-            onClick={handleUpload} 
-            disabled={loading}
-            className="upload-button"
-          >
-            {loading ? 'Analyzing...' : 'Analyze Document'}
-          </button>
+    <div className="p-4 max-w-xl mx-auto">
+      <form onSubmit={handleUpload} className="flex flex-col gap-4">
+        <input
+          type="file"
+          accept=".pdf,.txt,.png,.jpg"
+          onChange={(e) => setFile(e.target.files[0])}
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md"
+        >
+          Analyze
+        </button>
+      </form>
+
+      {result && (
+        <div className="mt-4 p-4 border rounded bg-gray-50">
+          <h2 className="font-bold">Analysis Result</h2>
+          <pre className="text-sm whitespace-pre-wrap">
+            {JSON.stringify(result, null, 2)}
+          </pre>
         </div>
       )}
-      
-      {error && <div className="error-message">{error}</div>}
     </div>
   );
-};
-
-export default DocumentUpload;
+}
