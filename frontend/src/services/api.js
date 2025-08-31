@@ -1,21 +1,52 @@
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
-export async function analyzeDocument(file) {
-  const fd = new FormData();
-  fd.append("file", file);
-
-  const res = await fetch(`${API_BASE}/analyze`, { method: "POST", body: fd });
-  if (!res.ok) throw new Error(`Analyze failed: ${res.status}`);
+export async function analyzeDocument(formData) {
+  const res = await fetch(`${API_BASE}/analyze`, { 
+    method: "POST", 
+    body: formData 
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Analysis failed: ${res.status}`);
+  }
+  
   return res.json();
 }
 
-export async function explainWithGemini(text, context = "") {
+export async function explainClause(text) {
   const res = await fetch(`${API_BASE}/explain`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, context })
+    body: JSON.stringify({ text })
   });
-  if (!res.ok) throw new Error(`Explain failed: ${res.status}`);
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Explanation failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function askQuestion(question, documentText) {
+  const res = await fetch(`${API_BASE}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, documentText })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Question failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function healthCheck() {
+  const res = await fetch(`${API_BASE}/health`);
+  if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
   return res.json();
 }
