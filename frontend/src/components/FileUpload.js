@@ -44,8 +44,25 @@ const FileUpload = ({ onAnalysisComplete, onError, isLoading, setIsLoading }) =>
       onError?.('Please select a file to analyze.');
       return;
     }
+    
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'text/plain', 'image/png', 'image/jpeg'];
+    if (!allowedTypes.includes(selectedFile.type)) {
+      onError?.('Unsupported file type. Please use PDF, TXT, PNG, or JPG files.');
+      return;
+    }
+    
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (selectedFile.size > maxSize) {
+      onError?.('File size too large. Please use files smaller than 10MB.');
+      return;
+    }
+    
     try {
       setIsLoading(true);
+      onError?.(''); // Clear any previous errors
+      
       const result = await analyzeDocument(selectedFile);
       onAnalysisComplete?.(result);
     } catch (err) {

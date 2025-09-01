@@ -8,7 +8,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 
 // Create uploads directory if it doesn't exist
@@ -26,6 +29,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'LexLink Server is running' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server accessible on all interfaces: http://0.0.0.0:${PORT}`);
 });

@@ -1,0 +1,5 @@
+
+> lexlink-backend@1.2.0 start
+> node server.js
+
+✅ Server running on http://localhost:3001

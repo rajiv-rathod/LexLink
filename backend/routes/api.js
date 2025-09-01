@@ -35,6 +35,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
+    console.log('File filter check:', file.mimetype);
     if (file.mimetype === 'application/pdf' || 
         file.mimetype === 'image/jpeg' || 
         file.mimetype === 'image/png' ||
@@ -45,6 +46,19 @@ const upload = multer({
     }
   }
 });
+
+// Multer error handling middleware
+const handleUploadError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
+    }
+    return res.status(400).json({ error: `Upload error: ${err.message}` });
+  } else if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+};
 
 // Extract text from PDF
 async function extractTextFromPDF(buffer) {
@@ -201,7 +215,7 @@ async function processWithGemini(text, task = 'analyze', documentType = null) {
       console.log('No API key found, returning mock response for demonstration');
       return generateMockResponse(text, task, documentType);
     }
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const docType = documentType || detectDocumentType(text);
     const limitedText = text.substring(0, 30000); // Limit text length for API
     
@@ -320,32 +334,50 @@ Provide a JSON response with:
 }
 
 // Routes
-router.post('/analyze', upload.single('document'), async (req, res) => {
+router.post('/analyze', upload.single('document'), handleUploadError, async (req, res) => {
   try {
+    console.log('Received analyze request');
+    console.log('File received:', req.file ? 'Yes' : 'No');
+    
     if (!req.file) {
+      console.log('No file in request');
       return res.status(400).json({ error: 'No document provided' });
     }
+    
+    console.log('File details:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
     
     let text;
     const { mimetype, buffer } = req.file;
     
     // Extract text based on file type
     if (mimetype === 'application/pdf') {
+      console.log('Processing PDF file');
       text = await extractTextFromPDF(buffer);
     } else if (mimetype === 'text/plain') {
+      console.log('Processing text file');
       text = buffer.toString('utf8');
     } else if (mimetype === 'image/jpeg' || mimetype === 'image/png') {
+      console.log('Processing image file');
       text = await extractTextFromImage(buffer, mimetype);
     } else {
       return res.status(400).json({ error: 'Unsupported file type' });
     }
     
     if (!text || text.trim().length === 0) {
+      console.log('No text extracted from document');
       return res.status(400).json({ error: 'No text could be extracted from the document' });
     }
     
+    console.log('Extracted text length:', text.length);
+    
     // Detect document type and process with enhanced AI
     const documentType = detectDocumentType(text);
+    console.log('Detected document type:', documentType);
+    
     const result = await processWithGemini(text, 'analyze', documentType);
     
     // Parse and return structured response

@@ -1,7 +1,14 @@
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+// Use relative URL - this will work if we proxy or if both are on same domain
+const API_BASE = "/api";
 
-export async function analyzeDocument(formData) {
+console.log('API_BASE URL:', API_BASE);
+
+export async function analyzeDocument(file) {
+  const formData = new FormData();
+  formData.append('document', file);
+  
+  console.log('Sending request to:', `${API_BASE}/analyze`);
+  
   const res = await fetch(`${API_BASE}/analyze`, { 
     method: "POST", 
     body: formData 

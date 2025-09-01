@@ -16,15 +16,26 @@ export default function UploadForm() {
       return; 
     }
     
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'text/plain', 'image/png', 'image/jpeg'];
+    if (!allowedTypes.includes(file.type)) {
+      setErr('Unsupported file type. Please use PDF, TXT, PNG, or JPG files.');
+      return;
+    }
+    
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setErr('File size too large. Please use files smaller than 10MB.');
+      return;
+    }
+    
     setErr(""); 
     setAnalysis(null);
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('document', file);
-      
-      const result = await analyzeDocument(formData);
+      const result = await analyzeDocument(file);
       setAnalysis(result);
     } catch (error) {
       console.error('Analysis error:', error);
