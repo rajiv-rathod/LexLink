@@ -1,10 +1,6 @@
 import React from 'react';
 
 const Footer = () => {
-  return (
-    import React from 'react';
-
-const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -51,26 +47,11 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-amber-400">Features</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li className="flex items-center space-x-2">
-                <span>📄</span>
-                <span>Document Analysis</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <span>🌐</span>
-                <span>Multi-Language Support</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <span>🔊</span>
-                <span>Text-to-Speech</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <span>🌙</span>
-                <span>Dark/Light Mode</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <span>🤖</span>
-                <span>AI-Powered Analysis</span>
-              </li>
+              <li className="flex items-center space-x-2"><span>📄</span><span>Document Analysis</span></li>
+              <li className="flex items-center space-x-2"><span>🌐</span><span>Multi-Language Support</span></li>
+              <li className="flex items-center space-x-2"><span>🔊</span><span>Text-to-Speech</span></li>
+              <li className="flex items-center space-x-2"><span>🌙</span><span>Dark/Light Mode</span></li>
+              <li className="flex items-center space-x-2"><span>🤖</span><span>AI-Powered Analysis</span></li>
             </ul>
           </div>
 
@@ -90,31 +71,11 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-amber-400">Legal</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>
-                <a href="#" className="hover:text-amber-400 transition-colors duration-200">
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-amber-400 transition-colors duration-200">
-                  Terms of Service
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-amber-400 transition-colors duration-200">
-                  Cookie Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-amber-400 transition-colors duration-200">
-                  Disclaimer
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-amber-400 transition-colors duration-200">
-                  Contact Us
-                </a>
-              </li>
+              <li><a href="#" className="hover:text-amber-400 transition-colors duration-200">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-amber-400 transition-colors duration-200">Terms of Service</a></li>
+              <li><a href="#" className="hover:text-amber-400 transition-colors duration-200">Cookie Policy</a></li>
+              <li><a href="#" className="hover:text-amber-400 transition-colors duration-200">Disclaimer</a></li>
+              <li><a href="#" className="hover:text-amber-400 transition-colors duration-200">Contact Us</a></li>
             </ul>
           </div>
         </div>
@@ -128,27 +89,14 @@ const Footer = () => {
               © {currentYear} LexLink. All rights reserved. Built with ❤️ for legal professionals.
             </div>
             <div className="flex items-center space-x-4 text-sm text-gray-400">
-              <span className="flex items-center space-x-1">
-                <span>🚀</span>
-                <span>Powered by AI</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span>🔒</span>
-                <span>Secure & Private</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span>💯</span>
-                <span>Free Forever</span>
-              </span>
+              <span className="flex items-center space-x-1"><span>🚀</span><span>Powered by AI</span></span>
+              <span className="flex items-center space-x-1"><span>🔒</span><span>Secure & Private</span></span>
+              <span className="flex items-center space-x-1"><span>💯</span><span>Free Forever</span></span>
             </div>
           </div>
         </div>
       </div>
     </footer>
-  );
-};
-
-export default Footer;
   );
 };
 

@@ -1,8 +1,4 @@
 import React from 'react';
-
-const Header = () => {
-  return (
-    import React from 'react';
 import ThemeToggle from './ThemeToggle';
 
 const Header = () => {
@@ -81,10 +77,6 @@ const Header = () => {
         </div>
       </div>
     </header>
-  );
-};
-
-export default Header;
   );
 };
 
