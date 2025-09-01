@@ -1,13 +1,31 @@
 const express = require('express');
 const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { Translate } = require('@google-cloud/translate').v2;
+const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
 const pdfParse = require('pdf-parse');
 const Tesseract = require('tesseract.js');
 
 const router = express.Router();
 
-// Initialize Gemini AI
+// Initialize Google Cloud services
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Initialize Google Cloud Translation (will work without service account for basic usage)
+let translate;
+try {
+  translate = new Translate();
+} catch (error) {
+  console.log('Translation service not available - running in demo mode');
+}
+
+// Initialize Text-to-Speech client  
+let ttsClient;
+try {
+  ttsClient = new TextToSpeechClient();
+} catch (error) {
+  console.log('Text-to-Speech service not available - running in demo mode');
+}
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -394,6 +412,255 @@ router.post('/ask', async (req, res) => {
     }
   } catch (error) {
     console.error('Error answering question:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== NEW GCP-POWERED FEATURES =====
+
+// Language detection and translation endpoint
+router.post('/translate', async (req, res) => {
+  try {
+    const { text, targetLanguage = 'en' } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required for translation' });
+    }
+
+    if (!translate) {
+      // Demo mode without actual translation
+      return res.json({
+        originalText: text,
+        translatedText: text,
+        detectedLanguage: 'en',
+        targetLanguage,
+        confidence: 1.0,
+        demoMode: true
+      });
+    }
+
+    try {
+      // Detect language
+      const [detection] = await translate.detect(text);
+      const detectedLanguage = detection.language;
+      
+      // Translate if needed
+      let translatedText = text;
+      if (detectedLanguage !== targetLanguage) {
+        const [translation] = await translate.translate(text, targetLanguage);
+        translatedText = translation;
+      }
+
+      res.json({
+        originalText: text,
+        translatedText,
+        detectedLanguage,
+        targetLanguage,
+        confidence: detection.confidence || 1.0
+      });
+    } catch (error) {
+      console.error('Translation error:', error);
+      // Fallback to demo mode
+      res.json({
+        originalText: text,
+        translatedText: text,
+        detectedLanguage: 'en',
+        targetLanguage,
+        confidence: 1.0,
+        demoMode: true,
+        error: 'Translation service unavailable'
+      });
+    }
+  } catch (error) {
+    console.error('Error in translation endpoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Text-to-Speech endpoint for accessibility
+router.post('/audio', async (req, res) => {
+  try {
+    const { text, languageCode = 'en-US', voiceName = 'en-US-Wavenet-D' } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required for audio generation' });
+    }
+
+    if (!ttsClient) {
+      // Demo mode - return mock audio data
+      return res.json({
+        audioContent: null,
+        text: text.substring(0, 200) + '...',
+        demoMode: true,
+        message: 'Audio generation would be available with full GCP setup'
+      });
+    }
+
+    try {
+      const request = {
+        input: { text: text.substring(0, 5000) }, // Limit text length
+        voice: { languageCode, name: voiceName },
+        audioConfig: { audioEncoding: 'MP3' },
+      };
+
+      const [response] = await ttsClient.synthesizeSpeech(request);
+      
+      res.json({
+        audioContent: response.audioContent.toString('base64'),
+        text: text.substring(0, 200) + '...',
+        languageCode,
+        voiceName
+      });
+    } catch (error) {
+      console.error('TTS error:', error);
+      // Fallback to demo mode
+      res.json({
+        audioContent: null,
+        text: text.substring(0, 200) + '...',
+        demoMode: true,
+        error: 'Text-to-Speech service unavailable'
+      });
+    }
+  } catch (error) {
+    console.error('Error in audio endpoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Document compliance check endpoint
+router.post('/compliance', async (req, res) => {
+  try {
+    const { documentText, documentType, jurisdiction = 'US' } = req.body;
+    
+    if (!documentText) {
+      return res.status(400).json({ error: 'Document text is required for compliance check' });
+    }
+
+    // Enhanced prompt for compliance checking
+    const compliancePrompt = `As a legal compliance expert, analyze this ${documentType || 'legal document'} for compliance with ${jurisdiction} regulations and industry standards.
+
+Document Content: ${documentText.substring(0, 10000)}
+
+Provide a detailed compliance analysis in JSON format:
+{
+  "complianceScore": 1-10,
+  "overallStatus": "compliant|non-compliant|needs-review",
+  "regulatoryIssues": [
+    {
+      "regulation": "Specific regulation name",
+      "issue": "Description of compliance issue",
+      "severity": "critical|high|medium|low",
+      "recommendation": "How to fix this issue"
+    }
+  ],
+  "industryStandards": {
+    "score": 1-10,
+    "comparison": "How this document compares to industry standards",
+    "improvements": ["List of suggested improvements"]
+  },
+  "legalRisks": [
+    {
+      "risk": "Description of legal risk",
+      "likelihood": "high|medium|low", 
+      "impact": "severe|moderate|minor",
+      "mitigation": "How to reduce this risk"
+    }
+  ],
+  "recommendations": {
+    "immediate": ["Critical actions needed now"],
+    "shortTerm": ["Actions needed within 30 days"],
+    "longTerm": ["Strategic improvements for future"]
+  }
+}`;
+
+    const complianceResult = await processWithGemini(compliancePrompt, 'compliance_check');
+    
+    try {
+      const parsedResult = JSON.parse(complianceResult);
+      res.json(parsedResult);
+    } catch (e) {
+      res.json({ 
+        complianceScore: 7,
+        overallStatus: 'needs-review',
+        rawResponse: complianceResult,
+        error: 'Could not parse compliance analysis'
+      });
+    }
+  } catch (error) {
+    console.error('Error in compliance check:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Document benchmarking endpoint
+router.post('/benchmark', async (req, res) => {
+  try {
+    const { documentText, documentType, industry = 'general' } = req.body;
+    
+    if (!documentText) {
+      return res.status(400).json({ error: 'Document text is required for benchmarking' });
+    }
+
+    // Enhanced prompt for document benchmarking
+    const benchmarkPrompt = `As a legal document analyst, compare this ${documentType || 'legal document'} against industry standards and typical documents in the ${industry} sector.
+
+Document Content: ${documentText.substring(0, 10000)}
+
+Provide a comprehensive benchmark analysis in JSON format:
+{
+  "overallRating": 1-10,
+  "industryComparison": {
+    "score": 1-10,
+    "percentile": "What percentile this document ranks in (e.g., 75th percentile)",
+    "summary": "How this compares to typical industry documents"
+  },
+  "fairnessScore": {
+    "overall": 1-10,
+    "toTenant": 1-10,
+    "toLandlord": 1-10,
+    "balance": "balanced|favors-landlord|favors-tenant"
+  },
+  "marketStandards": {
+    "rentAmount": "above-market|market-rate|below-market",
+    "securityDeposit": "standard|high|low",
+    "leaseTerm": "typical|long|short",
+    "policies": "strict|standard|lenient"
+  },
+  "unusualClauses": [
+    {
+      "clause": "Description of unusual clause",
+      "rarity": "very-rare|uncommon|somewhat-common",
+      "impact": "positive|negative|neutral",
+      "explanation": "Why this is unusual and what it means"
+    }
+  ],
+  "improvements": [
+    {
+      "area": "What could be improved",
+      "current": "How it is now", 
+      "suggested": "How it should be",
+      "benefit": "Why this improvement helps"
+    }
+  ],
+  "redFlags": [
+    "List of concerning provisions that are unusual or unfair"
+  ]
+}`;
+
+    const benchmarkResult = await processWithGemini(benchmarkPrompt, 'benchmark');
+    
+    try {
+      const parsedResult = JSON.parse(benchmarkResult);
+      res.json(parsedResult);
+    } catch (e) {
+      res.json({ 
+        overallRating: 6,
+        rawResponse: benchmarkResult,
+        error: 'Could not parse benchmark analysis'
+      });
+    }
+  } catch (error) {
+    console.error('Error in benchmark analysis:', error);
     res.status(500).json({ error: error.message });
   }
 });
