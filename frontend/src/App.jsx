@@ -1,5 +1,6 @@
 import Navbar from "./components/Navbar";
 import UploadForm from "./components/UploadForm";
+import "./enhanced-styles.css";
 
 export default function App() {
   return (

@@ -50,3 +50,65 @@ export async function healthCheck() {
   if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
   return res.json();
 }
+
+// ===== NEW GCP-POWERED FEATURES =====
+
+export async function translateText(text, targetLanguage = 'en') {
+  const res = await fetch(`${API_BASE}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, targetLanguage })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Translation failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function generateAudio(text, languageCode = 'en-US') {
+  const res = await fetch(`${API_BASE}/audio`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, languageCode })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Audio generation failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function checkCompliance(documentText, documentType, jurisdiction = 'US') {
+  const res = await fetch(`${API_BASE}/compliance`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ documentText, documentType, jurisdiction })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Compliance check failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function benchmarkDocument(documentText, documentType, industry = 'general') {
+  const res = await fetch(`${API_BASE}/benchmark`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ documentText, documentType, industry })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Benchmark analysis failed: ${res.status}`);
+  }
+  
+  return res.json();
+}

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { analyzeDocument } from "../services/api";
-import ResultCard from "./ResultCard";
-import ChatInterface from "./ChatInterface";
+import EnhancedResultCard from "./EnhancedResultCard";
 
 export default function UploadForm() {
   const [file, setFile] = useState(null);
@@ -158,10 +157,7 @@ export default function UploadForm() {
 
       {/* Results */}
       {analysis && (
-        <>
-          <ResultCard analysis={analysis} />
-          <ChatInterface analysis={analysis} />
-        </>
+        <EnhancedResultCard analysis={analysis} />
       )}
     </div>
   );

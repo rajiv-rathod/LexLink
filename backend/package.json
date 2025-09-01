@@ -7,6 +7,9 @@
     "dev": "NODE_ENV=development node server.js"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.17.0",
+    "@google-cloud/text-to-speech": "^6.3.0",
+    "@google-cloud/translate": "^9.2.0",
     "@google/generative-ai": "^0.21.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
