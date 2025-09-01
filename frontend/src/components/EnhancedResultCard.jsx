@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { translateText, generateAudio, checkCompliance, benchmarkDocument } from "../services/api";
+import TranslationPanel from "./TranslationPanel";
+import TextToSpeech from "./TextToSpeech";
 
-export default function EnhancedResultCard({ analysis }) {
+export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [translation, setTranslation] = useState(null);
   const [audioData, setAudioData] = useState(null);
@@ -102,6 +104,7 @@ export default function EnhancedResultCard({ analysis }) {
     { id: "overview", label: "📋 Overview", icon: "📋" },
     { id: "risk", label: "⚠️ Risk Analysis", icon: "⚠️" },
     { id: "recommendations", label: "💡 Recommendations", icon: "💡" },
+    { id: "translate", label: "🌍 Translate & Voice", icon: "🌍" },
     { id: "compliance", label: "✅ Compliance", icon: "✅" },
     { id: "benchmark", label: "📊 Benchmark", icon: "📊" },
     { id: "accessibility", label: "♿ Accessibility", icon: "♿" },
@@ -311,6 +314,13 @@ export default function EnhancedResultCard({ analysis }) {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === "translate" && (
+          <TranslationPanel 
+            documentText={analysis.summary}
+            documentSummary={analysis.summary}
+          />
         )}
 
         {activeTab === "compliance" && (

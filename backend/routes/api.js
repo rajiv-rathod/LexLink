@@ -1,8 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { Translate } = require('@google-cloud/translate').v2;
-const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
+// Removed Google Cloud dependencies - using free alternatives
 const pdfParse = require('pdf-parse');
 const Tesseract = require('tesseract.js');
 
@@ -11,125 +10,91 @@ const router = express.Router();
 // Initialize Google Cloud services
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Initialize Google Cloud Translation (will work without service account for basic usage)
-let translate;
-try {
-  translate = new Translate();
-} catch (error) {
-  console.log('Translation service not available - running in demo mode');
-}
-
-// Initialize Text-to-Speech client  
-let ttsClient;
-try {
-  ttsClient = new TextToSpeechClient();
-} catch (error) {
-  console.log('Text-to-Speech service not available - running in demo mode');
-}
-
-// Configure multer for file uploads
+// Configure multer for file upload handling
 const storage = multer.memoryStorage();
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    console.log('File filter check:', file.mimetype);
-    if (file.mimetype === 'application/pdf' || 
-        file.mimetype === 'image/jpeg' || 
-        file.mimetype === 'image/png' ||
-        file.mimetype === 'text/plain') {
+    const allowedTypes = [
+      'application/pdf',
+      'text/plain',
+      'image/jpeg',
+      'image/png',
+      'image/jpg'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Unsupported file type'), false);
+      cb(new Error('Invalid file type. Only PDF, text, and image files are allowed.'));
     }
   }
 });
 
-// Multer error handling middleware
-const handleUploadError = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
+// Error handler for multer
+const handleUploadError = (error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
     }
-    return res.status(400).json({ error: `Upload error: ${err.message}` });
-  } else if (err) {
-    return res.status(400).json({ error: err.message });
+  }
+  if (error) {
+    return res.status(400).json({ error: error.message });
   }
   next();
 };
 
-// Extract text from PDF
+// Text extraction functions
 async function extractTextFromPDF(buffer) {
   try {
     const data = await pdfParse(buffer);
     return data.text;
   } catch (error) {
+    console.error('PDF extraction error:', error);
     throw new Error('Failed to extract text from PDF');
   }
 }
 
-// Extract text from image using Tesseract OCR
-async function extractTextFromImage(buffer, mimeType) {
+async function extractTextFromImage(buffer, mimetype) {
   try {
-    const result = await Tesseract.recognize(
-      buffer,
-      'eng',
-      { logger: m => console.log(m) }
-    );
-    return result.data.text;
+    const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
+    return text;
   } catch (error) {
+    console.error('OCR error:', error);
     throw new Error('Failed to extract text from image');
   }
 }
 
-// Detect document type based on content
+// Document type detection
 function detectDocumentType(text) {
-  const lowerText = text.toLowerCase();
+  const textLower = text.toLowerCase();
   
-  // Keywords for different document types
-  const patterns = {
-    rental_agreement: ['rent', 'lease', 'tenant', 'landlord', 'property', 'premises', 'deposit', 'eviction'],
-    loan_contract: ['loan', 'credit', 'borrower', 'lender', 'interest rate', 'payment', 'default', 'collateral'],
-    employment: ['employee', 'employer', 'salary', 'wages', 'termination', 'benefits', 'confidentiality'],
-    terms_of_service: ['terms of service', 'user agreement', 'privacy policy', 'cookies', 'data collection'],
-    nda: ['confidential', 'non-disclosure', 'proprietary information', 'trade secrets'],
-    purchase_agreement: ['purchase', 'buyer', 'seller', 'goods', 'delivery', 'warranty'],
-    insurance: ['insurance', 'coverage', 'premium', 'deductible', 'claim', 'policy']
-  };
-  
-  let bestMatch = 'general_legal';
-  let maxScore = 0;
-  
-  for (const [type, keywords] of Object.entries(patterns)) {
-    const score = keywords.reduce((acc, keyword) => {
-      return acc + (lowerText.includes(keyword) ? 1 : 0);
-    }, 0);
-    
-    if (score > maxScore) {
-      maxScore = score;
-      bestMatch = type;
-    }
+  if (textLower.includes('lease') || textLower.includes('rental') || textLower.includes('tenant')) {
+    return 'lease_agreement';
+  } else if (textLower.includes('employment') || textLower.includes('employee') || textLower.includes('employer')) {
+    return 'employment_contract';
+  } else if (textLower.includes('nda') || textLower.includes('non-disclosure') || textLower.includes('confidential')) {
+    return 'nda';
+  } else if (textLower.includes('service') || textLower.includes('provider') || textLower.includes('client')) {
+    return 'service_agreement';
+  } else if (textLower.includes('purchase') || textLower.includes('sale') || textLower.includes('buyer') || textLower.includes('seller')) {
+    return 'purchase_agreement';
+  } else if (textLower.includes('loan') || textLower.includes('credit') || textLower.includes('borrower')) {
+    return 'loan_agreement';
+  } else {
+    return 'legal_document';
   }
-  
-  return bestMatch;
 }
 
-// Generate mock response for demonstration when API is not available
+// Generate mock responses for demonstration
 function generateMockResponse(text, task, documentType) {
-  const docType = documentType || detectDocumentType(text);
-  
-  if (task === 'analyze') {
+  if (task === 'analyze' && documentType === 'lease_agreement') {
     const mockResponse = {
-      documentType: docType,
-      summary: `This ${docType.replace('_', ' ')} outlines the key terms and conditions for the agreement. It includes specific obligations for both parties, payment terms, and conditions for termination.`,
+      documentType: "lease_agreement",
+      summary: "This is a residential lease agreement for a one-bedroom apartment with monthly rent of $1,500. The lease includes standard terms but has some strict policies around pets and late payments that tenants should be aware of.",
       keyTerms: [
-        {
-          term: "Security Deposit",
-          explanation: "Money paid upfront that the landlord holds as protection against damages or unpaid rent",
-          importance: "This is money you'll get back if you follow the lease terms and don't damage the property"
-        },
         {
           term: "Late Fees", 
           explanation: "Extra charges applied when rent is paid after the due date",
@@ -205,6 +170,65 @@ function generateMockResponse(text, task, documentType) {
   return JSON.stringify({
     response: "Mock response for demonstration purposes. Please configure GEMINI_API_KEY for full functionality."
   });
+}
+
+// Free translation function using Gemini AI as translator
+async function translateTextFree(text, targetLanguage) {
+  try {
+    // If we don't have Gemini API key, return mock response
+    if (!process.env.GEMINI_API_KEY) {
+      return {
+        originalText: text,
+        translatedText: `[MOCK TRANSLATION to ${targetLanguage}] ${text}`,
+        service: 'mock',
+        confidence: 1.0
+      };
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, no explanations:
+
+Text to translate: ${text}
+
+Translated text:`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const translatedText = response.text().trim();
+
+    return {
+      originalText: text,
+      translatedText: translatedText,
+      service: 'gemini-ai',
+      confidence: 0.9
+    };
+  } catch (error) {
+    console.error('Translation error:', error);
+    // Fallback to mock response
+    return {
+      originalText: text,
+      translatedText: `[TRANSLATION ERROR - showing original] ${text}`,
+      service: 'fallback',
+      confidence: 0.1
+    };
+  }
+}
+
+// Free audio response function for Web Speech API
+function generateFreeAudioResponse(text, languageCode) {
+  return {
+    text: text,
+    languageCode: languageCode,
+    audioContent: null, // Will be generated on frontend using Web Speech API
+    service: 'web-speech-api',
+    instructions: 'Use the Web Speech API in your browser to play this text',
+    webSpeechCode: `
+// Frontend JavaScript code to use:
+const utterance = new SpeechSynthesisUtterance("${text.replace(/"/g, '\\"')}");
+utterance.lang = "${languageCode}";
+speechSynthesis.speak(utterance);
+    `
+  };
 }
 
 // Enhanced AI processing with sophisticated prompts
@@ -317,12 +341,19 @@ Provide a JSON response with:
     // Clean up response to ensure valid JSON
     responseText = responseText.replace(/```json\n?/, '').replace(/```\n?$/, '').trim();
     
+    // Try to extract JSON from the response
+    let jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      responseText = jsonMatch[0];
+    }
+    
     try {
       // Validate JSON
       JSON.parse(responseText);
       return responseText;
     } catch (jsonError) {
       console.warn('Response was not valid JSON, returning as text:', jsonError);
+      console.log('Original response:', responseText);
       return JSON.stringify({ rawResponse: responseText });
     }
     
@@ -450,7 +481,49 @@ router.post('/ask', async (req, res) => {
 
 // ===== NEW GCP-POWERED FEATURES =====
 
-// Language detection and translation endpoint
+// Supported languages with Indian regional languages
+const SUPPORTED_LANGUAGES = {
+  // English & European
+  'en': { name: 'English', voice: 'en-US-Wavenet-D' },
+  'es': { name: 'Spanish', voice: 'es-ES-Wavenet-A' },
+  'fr': { name: 'French', voice: 'fr-FR-Wavenet-A' },
+  'de': { name: 'German', voice: 'de-DE-Wavenet-A' },
+  'it': { name: 'Italian', voice: 'it-IT-Wavenet-A' },
+  'pt': { name: 'Portuguese', voice: 'pt-BR-Wavenet-A' },
+  'ru': { name: 'Russian', voice: 'ru-RU-Wavenet-A' },
+  
+  // Indian Regional Languages
+  'hi': { name: 'Hindi (हिंदी)', voice: 'hi-IN-Wavenet-A' },
+  'bn': { name: 'Bengali (বাংলা)', voice: 'bn-IN-Wavenet-A' },
+  'te': { name: 'Telugu (తెలుగు)', voice: 'te-IN-Standard-A' },
+  'mr': { name: 'Marathi (मराठी)', voice: 'mr-IN-Wavenet-A' },
+  'ta': { name: 'Tamil (தமிழ்)', voice: 'ta-IN-Wavenet-A' },
+  'ur': { name: 'Urdu (اردو)', voice: 'ur-IN-Wavenet-A' },
+  'gu': { name: 'Gujarati (ગુજરાતી)', voice: 'gu-IN-Wavenet-A' },
+  'kn': { name: 'Kannada (ಕನ್ನಡ)', voice: 'kn-IN-Wavenet-A' },
+  'ml': { name: 'Malayalam (മലയാളം)', voice: 'ml-IN-Wavenet-A' },
+  'pa': { name: 'Punjabi (ਪੰਜਾਬੀ)', voice: 'pa-IN-Wavenet-A' },
+  'or': { name: 'Odia (ଓଡ଼ିଆ)', voice: 'or-IN-Standard-A' },
+  'as': { name: 'Assamese (অসমীয়া)', voice: 'as-IN-Standard-A' },
+  
+  // Other Asian Languages
+  'zh': { name: 'Chinese (中文)', voice: 'zh-CN-Wavenet-A' },
+  'ja': { name: 'Japanese (日本語)', voice: 'ja-JP-Wavenet-A' },
+  'ko': { name: 'Korean (한국어)', voice: 'ko-KR-Wavenet-A' },
+  'th': { name: 'Thai (ไทย)', voice: 'th-TH-Standard-A' },
+  'vi': { name: 'Vietnamese (Tiếng Việt)', voice: 'vi-VN-Wavenet-A' },
+  'ar': { name: 'Arabic (العربية)', voice: 'ar-XA-Wavenet-A' }
+};
+
+// Get supported languages endpoint
+router.get('/languages', (req, res) => {
+  res.json({
+    languages: SUPPORTED_LANGUAGES,
+    total: Object.keys(SUPPORTED_LANGUAGES).length
+  });
+});
+
+// Language detection and translation endpoint (FREE VERSION)
 router.post('/translate', async (req, res) => {
   try {
     const { text, targetLanguage = 'en' } = req.body;
@@ -459,102 +532,106 @@ router.post('/translate', async (req, res) => {
       return res.status(400).json({ error: 'Text is required for translation' });
     }
 
-    if (!translate) {
-      // Demo mode without actual translation
-      return res.json({
-        originalText: text,
-        translatedText: text,
-        detectedLanguage: 'en',
-        targetLanguage,
-        confidence: 1.0,
-        demoMode: true
-      });
-    }
+    // Map target language to supported codes
+    const languageMap = {
+      'hi': 'hi',      // Hindi
+      'bn': 'bn',      // Bengali  
+      'te': 'te',      // Telugu
+      'mr': 'mr',      // Marathi
+      'ta': 'ta',      // Tamil
+      'gu': 'gu',      // Gujarati
+      'kn': 'kn',      // Kannada
+      'ml': 'ml',      // Malayalam
+      'pa': 'pa',      // Punjabi
+      'or': 'or',      // Odia
+      'as': 'as',      // Assamese
+      'ur': 'ur',      // Urdu
+      'ne': 'ne',      // Nepali
+      'es': 'es',      // Spanish
+      'fr': 'fr',      // French
+      'de': 'de',      // German
+      'it': 'it',      // Italian
+      'pt': 'pt',      // Portuguese
+      'ru': 'ru',      // Russian
+      'ja': 'ja',      // Japanese
+      'ko': 'ko',      // Korean
+      'zh': 'zh-cn',   // Chinese
+      'ar': 'ar',      // Arabic
+      'en': 'en'       // English
+    };
+
+    const mappedLanguage = languageMap[targetLanguage] || targetLanguage;
 
     try {
-      // Detect language
-      const [detection] = await translate.detect(text);
-      const detectedLanguage = detection.language;
-      
-      // Translate if needed
-      let translatedText = text;
-      if (detectedLanguage !== targetLanguage) {
-        const [translation] = await translate.translate(text, targetLanguage);
-        translatedText = translation;
-      }
-
+      const result = await translateTextFree(text, mappedLanguage);
       res.json({
-        originalText: text,
-        translatedText,
-        detectedLanguage,
-        targetLanguage,
-        confidence: detection.confidence || 1.0
+        originalText: result.originalText,
+        translatedText: result.translatedText,
+        targetLanguage: mappedLanguage,
+        service: result.service,
+        supportedLanguages: Object.keys(languageMap),
+        isFree: true
       });
     } catch (error) {
       console.error('Translation error:', error);
-      // Fallback to demo mode
-      res.json({
-        originalText: text,
-        translatedText: text,
-        detectedLanguage: 'en',
-        targetLanguage,
-        confidence: 1.0,
-        demoMode: true,
-        error: 'Translation service unavailable'
+      res.status(500).json({ 
+        error: 'Translation failed',
+        fallback: text,
+        message: 'Using original text as fallback'
       });
     }
   } catch (error) {
-    console.error('Error in translation endpoint:', error);
+    console.error('Translation endpoint error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Text-to-Speech endpoint for accessibility
+// Text-to-Speech endpoint (FREE VERSION using Web Speech API)
 router.post('/audio', async (req, res) => {
   try {
-    const { text, languageCode = 'en-US', voiceName = 'en-US-Wavenet-D' } = req.body;
+    const { text, languageCode = 'en-US' } = req.body;
     
     if (!text) {
       return res.status(400).json({ error: 'Text is required for audio generation' });
     }
 
-    if (!ttsClient) {
-      // Demo mode - return mock audio data
-      return res.json({
-        audioContent: null,
-        text: text.substring(0, 200) + '...',
-        demoMode: true,
-        message: 'Audio generation would be available with full GCP setup'
-      });
-    }
+    // Language code mapping for Web Speech API
+    const speechLanguageCodes = {
+      'en': 'en-US',
+      'hi': 'hi-IN',
+      'bn': 'bn-IN', 
+      'te': 'te-IN',
+      'mr': 'mr-IN',
+      'ta': 'ta-IN',
+      'gu': 'gu-IN',
+      'kn': 'kn-IN',
+      'ml': 'ml-IN',
+      'pa': 'pa-IN',
+      'ur': 'ur-IN',
+      'es': 'es-ES',
+      'fr': 'fr-FR',
+      'de': 'de-DE',
+      'it': 'it-IT',
+      'pt': 'pt-PT',
+      'ru': 'ru-RU',
+      'ja': 'ja-JP',
+      'ko': 'ko-KR',
+      'zh': 'zh-CN',
+      'ar': 'ar-SA'
+    };
 
-    try {
-      const request = {
-        input: { text: text.substring(0, 5000) }, // Limit text length
-        voice: { languageCode, name: voiceName },
-        audioConfig: { audioEncoding: 'MP3' },
-      };
+    const mappedLanguageCode = speechLanguageCodes[languageCode] || languageCode;
+    const audioResponse = generateFreeAudioResponse(text, mappedLanguageCode);
 
-      const [response] = await ttsClient.synthesizeSpeech(request);
-      
-      res.json({
-        audioContent: response.audioContent.toString('base64'),
-        text: text.substring(0, 200) + '...',
-        languageCode,
-        voiceName
-      });
-    } catch (error) {
-      console.error('TTS error:', error);
-      // Fallback to demo mode
-      res.json({
-        audioContent: null,
-        text: text.substring(0, 200) + '...',
-        demoMode: true,
-        error: 'Text-to-Speech service unavailable'
-      });
-    }
+    res.json({
+      ...audioResponse,
+      isFree: true,
+      instructions: 'Audio will be generated using browser Web Speech API',
+      supportedLanguages: Object.keys(speechLanguageCodes)
+    });
+
   } catch (error) {
-    console.error('Error in audio endpoint:', error);
+    console.error('Audio generation error:', error);
     res.status(500).json({ error: error.message });
   }
 });

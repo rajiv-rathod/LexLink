@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { analyzeDocument } from "../services/api";
 import EnhancedResultCard from "./EnhancedResultCard";
+import LanguageSelector from "./LanguageSelector";
 
 export default function UploadForm() {
   const [file, setFile] = useState(null);
@@ -8,6 +9,7 @@ export default function UploadForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
 
   const onAnalyze = async (e) => {
     e.preventDefault();
