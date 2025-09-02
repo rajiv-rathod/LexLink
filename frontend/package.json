@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-  "start": "vite",
-  "dev": "vite",
-  "build": "vite build",
-  "preview": "vite preview"
-},
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "vercel-build": "vite build"
+  },
   "dependencies": {
     "framer-motion": "^11.0.0",
     "react": "^18.3.1",
