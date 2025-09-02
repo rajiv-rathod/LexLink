@@ -49,43 +49,57 @@ LexLink is an intelligent legal document analysis platform that uses advanced AI
    cd LexLink
    ```
 
-2. **Install backend dependencies**
+2. **Quick setup**
    ```bash
-   cd backend
-   npm install
+   ./setup.sh
    ```
+   Or manually:
 
-3. **Install frontend dependencies**
+3. **Install dependencies**
    ```bash
-   cd ../frontend
    npm install
+   cd backend && npm install && cd ..
    ```
 
 4. **Configure environment variables**
    ```bash
-   cd ../backend
    cp .env.example .env
-   # Edit .env and add your API keys
+   # Edit .env and add your GEMINI_API_KEY
    ```
 
-5. **Start the application**
+5. **Start development servers**
 
    **Backend** (Terminal 1):
    ```bash
    cd backend
-   npm start
+   npm run dev
    ```
 
    **Frontend** (Terminal 2):
    ```bash
-   cd frontend
    npm run dev
    ```
 
 6. **Open your browser**
    ```
-   http://localhost:5173
+   http://localhost:5174
    ```
+
+## 🌐 Deployment (Completely FREE!)
+
+Deploy LexLink with **zero cost** using Railway + Vercel:
+
+### Quick Deploy
+1. **Backend to Railway**: [Deploy Guide](./RAILWAY_DEPLOYMENT.md)
+2. **Frontend to Vercel**: Automatic with environment variables
+
+### Architecture
+```
+Frontend (Vercel) ──→ Backend (Railway) ──→ Google Gemini AI
+     Free                   Free                   Free
+```
+
+**📖 See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete deployment guide**
 
 ## 🔧 Configuration
 

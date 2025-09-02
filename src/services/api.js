@@ -1,6 +1,9 @@
-// Use relative URL - this will work if we proxy or if both are on same domain
-const API_BASE = "/api";
+// Use environment-based API URL configuration
+const API_BASE = import.meta.env.PROD 
+  ? (import.meta.env.VITE_BACKEND_URL || "https://lexlink-backend-production.up.railway.app/api")
+  : "/api";
 
+console.log('Environment:', import.meta.env.MODE);
 console.log('API_BASE URL:', API_BASE);
 
 export async function analyzeDocument(file) {
