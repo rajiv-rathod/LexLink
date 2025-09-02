@@ -1,37 +1,20 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
-    }
-  ],
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install --prefix frontend",
   "functions": {
-    "api/analyze.js": {
-      "maxDuration": 30
-    },
-    "api/translate.js": {
-      "maxDuration": 30
-    },
-    "api/tts.js": {
+    "api/*.js": {
       "maxDuration": 30
     }
   },
-  "env": {
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "NODE_ENV": "production"
-  }
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/dist/$1"
+    }
+  ]
 }
