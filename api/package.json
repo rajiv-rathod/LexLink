@@ -4,7 +4,9 @@
   "description": "Vercel serverless API functions for LexLink",
   "main": "index.js",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0"
+    "@google/generative-ai": "^0.21.0",
+    "busboy": "^1.6.0",
+    "pdfjs-dist": "^4.0.379"
   },
   "keywords": [
     "legal",
