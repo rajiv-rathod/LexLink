@@ -1,5 +1,3 @@
-const { Translate } = require('@google-cloud/translate').v2;
-
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -23,24 +21,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    // For demo purposes, return a mock translation
-    // In production, you would use Google Translate API with proper credentials
+    // Mock translations for different languages
     const mockTranslations = {
-      'hi': 'यह एक नमूना अनुवाद है।',
-      'ta': 'இது ஒரு மாதிரி மொழிபெயர்ப்பு ஆகும்.',
-      'te': 'ఇది ఒక నమూనా అనువాదం.',
-      'bn': 'এটি একটি নমুনা অনুবাদ।',
-      'mr': 'हे एक नमुना भाषांतर आहे।',
-      'gu': 'આ એક નમૂનો અનુવાદ છે।',
-      'kn': 'ಇದು ಒಂದು ಮಾದರಿ ಅನುವಾದವಾಗಿದೆ.',
-      'es': 'Esta es una traducción de muestra.',
-      'fr': 'Ceci est un exemple de traduction.',
-      'de': 'Dies ist eine Beispielübersetzung.',
-      'zh': '这是一个示例翻译。',
-      'ja': 'これはサンプル翻訳です。'
+      'hi': 'यह एक कानूनी दस्तावेज़ विश्लेषण है जो मुख्य शर्तों और जोखिमों की पहचान करता है।',
+      'ta': 'இது முக்கிய நிபந்தனைகள் மற்றும் அபாயங்களை அடையாளம் காணும் ஒரு சட்ட ஆவண பகுப்பாய்வு ஆகும்.',
+      'te': 'ఇది ముఖ్య నిబంధనలు మరియు ప్రమాదాలను గుర్తించే ఒక చట్టపరమైన పత్రం విశ్లేషణ.',
+      'bn': 'এটি একটি আইনি নথি বিশ্লেষণ যা মূল শর্তাবলী এবং ঝুঁকি চিহ্নিত করে।',
+      'mr': 'हे एक कायदेशीर दस्तऐवज विश्लेषण आहे जे मुख्य अटी आणि जोखीम ओळखते।',
+      'gu': 'આ એક કાનૂની દસ્તાવેજ વિશ્લેષણ છે જે મુખ્ય શરતો અને જોખમોને ઓળખે છે.',
+      'kn': 'ಇದು ಮುಖ್ಯ ನಿಯಮಗಳು ಮತ್ತು ಅಪಾಯಗಳನ್ನು ಗುರುತಿಸುವ ಕಾನೂನು ದಾಖಲೆ ವಿಶ್ಲೇಷಣೆಯಾಗಿದೆ.',
+      'es': 'Este es un análisis de documento legal que identifica términos clave y riesgos.',
+      'fr': 'Il s\'agit d\'une analyse de document juridique qui identifie les termes clés et les risques.',
+      'de': 'Dies ist eine Analyse eines Rechtsdokuments, die Schlüsselbegriffe und Risiken identifiziert.',
+      'zh': '这是一个法律文件分析，识别关键条款和风险。',
+      'ja': 'これは主要な条項とリスクを特定する法的文書分析です。'
     };
 
-    const translatedText = mockTranslations[targetLanguage] || text;
+    const translatedText = mockTranslations[targetLanguage] || `[${targetLanguage.toUpperCase()}] ${text}`;
 
     res.status(200).json({
       success: true,

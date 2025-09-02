@@ -13,6 +13,12 @@ export default async function handler(req, res) {
   res.status(200).json({ 
     status: 'ok', 
     message: 'LexLink API is running on Vercel',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      analyze: '/api/analyze',
+      translate: '/api/translate', 
+      tts: '/api/tts',
+      health: '/api/health'
+    }
   });
 }
