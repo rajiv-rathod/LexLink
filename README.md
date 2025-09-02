@@ -210,6 +210,23 @@ curl http://localhost:3001/api/health
 
 ## 🚀 Deployment
 
+### Vercel (Recommended - Full Stack)
+
+**Complete deployment with frontend + backend in one project:**
+
+```bash
+# 1. Deploy to Vercel
+vercel
+
+# 2. Configure environment variables in Vercel dashboard:
+#    - GEMINI_API_KEY (required)
+#    - NODE_ENV=production
+
+# 3. Your app will be available at: https://your-project.vercel.app
+```
+
+📖 **[Complete Vercel Deployment Guide](./DEPLOYMENT.md)**
+
 ### Local Production Build
 ```bash
 # Frontend
@@ -221,7 +238,7 @@ cd backend
 npm start
 ```
 
-### Cloud Deployment
+### Alternative Cloud Deployment Options
 - **Frontend**: Deploy to Vercel, Netlify, or GitHub Pages
 - **Backend**: Deploy to Railway, Render, or Google Cloud Run
 - **Environment**: Ensure all API keys are properly configured
