@@ -1,5 +1,10 @@
 {
+  "name": "lexlink",
+  "version": "1.0.0",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@google-cloud/translate": "^9.2.0",
+    "@google-cloud/text-to-speech": "^6.3.0",
     "googleapis": "^159.0.0"
   }
 }
