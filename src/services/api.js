@@ -1,58 +1,125 @@
-import axios from 'axios';
+// Environment-based API URL configuration for dual Vercel deployment
+const API_BASE = import.meta.env.PROD 
+  ? (import.meta.env.VITE_API_URL || "https://lexlink-backend.vercel.app/api")
+  : "/api";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+console.log('Environment:', import.meta.env.MODE);
+console.log('Production:', import.meta.env.PROD);
+console.log('API_BASE URL:', API_BASE);
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-});
-
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+export async function analyzeDocument(file) {
+  const formData = new FormData();
+  formData.append('document', file);
+  
+  console.log('Sending request to:', `${API_BASE}/analyze`);
+  
+  const res = await fetch(`${API_BASE}/analyze`, { 
+    method: "POST", 
+    body: formData 
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Analysis failed: ${res.status}`);
   }
-);
+  
+  return res.json();
+}
 
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      return Promise.reject(new Error(error.response.data.error || 'Server error'));
-    } else if (error.request) {
-      return Promise.reject(new Error('Network error. Please check your connection.'));
-    } else {
-      return Promise.reject(new Error('An unexpected error occurred.'));
-    }
+export async function explainClause(text) {
+  const res = await fetch(`${API_BASE}/explain`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Explanation failed: ${res.status}`);
   }
-);
+  
+  return res.json();
+}
 
-export const analyzeDocument = (formData) => {
-  return api.post('/analyze', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }).then(response => response.data);
-};
+export async function askQuestion(question, documentText) {
+  const res = await fetch(`${API_BASE}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, documentText })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Question failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
 
-export const explainClause = (text) => {
-  return api.post('/explain', { text }).then(response => response.data);
-};
+export async function healthCheck() {
+  const res = await fetch(`${API_BASE}/health`);
+  if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
+  return res.json();
+}
 
-export const askQuestion = (question, documentText) => {
-  return api.post('/ask', { question, documentText }).then(response => response.data);
-};
+// ===== NEW GCP-POWERED FEATURES =====
 
-export const healthCheck = () => {
-  return api.get('/health').then(response => response.data);
-};
+export async function translateText(text, targetLanguage = 'en') {
+  const res = await fetch(`${API_BASE}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, targetLanguage })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Translation failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
 
-export default api;
+export async function generateAudio(text, languageCode = 'en-US') {
+  const res = await fetch(`${API_BASE}/audio`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, languageCode })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Audio generation failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function checkCompliance(documentText, documentType, jurisdiction = 'US') {
+  const res = await fetch(`${API_BASE}/compliance`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ documentText, documentType, jurisdiction })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Compliance check failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+export async function benchmarkDocument(documentText, documentType, industry = 'general') {
+  const res = await fetch(`${API_BASE}/benchmark`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ documentText, documentType, industry })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Benchmark analysis failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
