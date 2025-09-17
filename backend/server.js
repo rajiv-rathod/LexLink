@@ -7,15 +7,38 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Enhanced CORS configuration for separate deployment
+const allowedOrigins = [
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'https://lexlink.vercel.app',
+  'https://*.vercel.app',
+  /^https:\/\/.*\.vercel\.app$/
+];
+
+// Add any custom origins from environment
+if (process.env.ALLOWED_ORIGINS) {
+  const customOrigins = process.env.ALLOWED_ORIGINS.split(',');
+  allowedOrigins.push(...customOrigins);
+}
+
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://lexlink.vercel.app',
-        'https://*.vercel.app',
-        /^https:\/\/.*\.vercel\.app$/
-      ]
-    : true,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      }
+      return allowedOrigin.test(origin);
+    })) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -39,6 +62,10 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`✅ Server accessible on all interfaces: http://0.0.0.0:${PORT}`);
+  console.log(`✅ LexLink Backend Server running on http://localhost:${PORT}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ CORS Origins: ${allowedOrigins.slice(0, 3).join(', ')}${allowedOrigins.length > 3 ? '...' : ''}`);
 });
+
+// Export for Vercel serverless deployment
+module.exports = app;

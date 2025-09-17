@@ -1,9 +1,10 @@
-// Use environment-based API URL configuration
+// Environment-based API URL configuration for dual Vercel deployment
 const API_BASE = import.meta.env.PROD 
-  ? (import.meta.env.VITE_BACKEND_URL || "https://lexlink-backend-production.up.railway.app/api")
+  ? (import.meta.env.VITE_API_URL || "https://lexlink-backend.vercel.app/api")
   : "/api";
 
 console.log('Environment:', import.meta.env.MODE);
+console.log('Production:', import.meta.env.PROD);
 console.log('API_BASE URL:', API_BASE);
 
 export async function analyzeDocument(file) {

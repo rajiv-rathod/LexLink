@@ -87,19 +87,19 @@ LexLink is an intelligent legal document analysis platform that uses advanced AI
 
 ## 🌐 Deployment (Completely FREE!)
 
-Deploy LexLink with **zero cost** using Railway + Vercel:
+Deploy LexLink with **zero cost** using dual Vercel deployment:
 
-### Quick Deploy
-1. **Backend to Railway**: [Deploy Guide](./RAILWAY_DEPLOYMENT.md)
-2. **Frontend to Vercel**: Automatic with environment variables
-
-### Architecture
+### Dual Vercel Architecture
 ```
-Frontend (Vercel) ──→ Backend (Railway) ──→ Google Gemini AI
-     Free                   Free                   Free
+Frontend (Vercel)    Backend (Vercel)    Google Gemini AI
+     │                    │                    │
+ main branch         backend branch        Free Tier
+     │                    │                    │
+   React App         Express API          AI Analysis
+     Free               Free                 Free
 ```
 
-**📖 See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete deployment guide**
+**📖 See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide**
 
 ## 🔧 Configuration
 
@@ -224,20 +224,26 @@ curl http://localhost:3001/api/health
 
 ## 🚀 Deployment
 
-### Vercel (Recommended - Full Stack)
+### Vercel Deployment (Production)
 
-**Complete deployment with frontend + backend in one project:**
+**Complete deployment with frontend + backend as separate Vercel projects:**
 
-```bash
-# 1. Deploy to Vercel
-vercel
+1. **Deploy Backend**:
+   ```bash
+   # Create backend branch and deploy
+   git checkout -b backend
+   # Follow DEPLOYMENT.md instructions
+   ```
 
-# 2. Configure environment variables in Vercel dashboard:
-#    - GEMINI_API_KEY (required)
-#    - NODE_ENV=production
+2. **Deploy Frontend**:
+   ```bash
+   # Deploy main branch to Vercel
+   # Configure VITE_API_URL environment variable
+   ```
 
-# 3. Your app will be available at: https://your-project.vercel.app
-```
+3. **Configure Environment Variables**:
+   - **Backend**: `GEMINI_API_KEY`, `ALLOWED_ORIGINS`
+   - **Frontend**: `VITE_API_URL`
 
 📖 **[Complete Vercel Deployment Guide](./DEPLOYMENT.md)**
 
@@ -253,9 +259,9 @@ npm start
 ```
 
 ### Alternative Cloud Deployment Options
-- **Frontend**: Deploy to Vercel, Netlify, or GitHub Pages
-- **Backend**: Deploy to Railway, Render, or Google Cloud Run
-- **Environment**: Ensure all API keys are properly configured
+- **Frontend**: Deploy to Vercel or Netlify
+- **Backend**: Deploy to separate Vercel project, Render, or Google Cloud Run
+- **Environment**: Ensure all API keys are properly configured and CORS is set up
 
 ## 🤝 Contributing
 

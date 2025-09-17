@@ -1,6 +1,8 @@
-# 🚀 Complete Vercel Deployment Guide for LexLink
+# 🚀 LexLink Vercel Deployment Guide
 
-This guide covers deploying the entire LexLink application (frontend + backend API) to Vercel as a full-stack serverless application.
+This guide covers deploying LexLink with a **dual Vercel deployment** strategy:
+- **Frontend**: Main branch deployed as React application
+- **Backend**: Separate branch deployed as Express.js API
 
 ## 📋 Prerequisites
 
@@ -10,94 +12,100 @@ This guide covers deploying the entire LexLink application (frontend + backend A
 
 ## 🏗️ Architecture Overview
 
-LexLink is deployed as a **single Vercel project** with:
+LexLink uses a **dual Vercel deployment** strategy:
 
-- **Frontend**: React + Vite application served statically
-- **Backend**: Serverless API functions in the `/api` directory
-- **Routing**: All API calls go to `/api/*` endpoints
-- **File Processing**: Client-side file handling with server-side AI analysis
+- **Frontend (main branch)**: React + Vite application served statically
+- **Backend (backend branch)**: Express.js API deployed separately
+- **Cross-Origin**: CORS configured for secure API communication
+- **Environment Variables**: Configured separately for each deployment
 
-## 📁 Project Structure for Vercel
+## 📁 Deployment Structure
 
 ```
-LexLink/
-├── api/                    # 🔥 Vercel Serverless Functions
-│   ├── analyze.js         # Document analysis endpoint
-│   ├── ask.js             # Q&A functionality
-│   ├── audio.js           # Text-to-speech
-│   ├── benchmark.js       # Document benchmarking
-│   ├── compliance.js      # Compliance checking
-│   ├── explain.js         # Clause explanation
-│   ├── health.js          # Health check
-│   ├── languages.js       # Supported languages
-│   ├── translate.js       # Translation service
-│   └── tts.js             # Text-to-speech (alias)
-├── frontend/              # React frontend source
-├── src/                   # React components (root level)
-├── public/                # Static assets
-├── dist/                  # Built frontend (auto-generated)
-├── vercel.json           # Vercel configuration
-├── package.json          # Root package.json for frontend
-└── .env.example          # Environment variables template
+LexLink Repository/
+├── main branch (Frontend)         # 🎨 Vercel Project #1
+│   ├── src/                      # React components
+│   ├── public/                   # Static assets
+│   ├── package.json             # Frontend dependencies
+│   ├── vite.config.js           # Vite configuration
+│   └── vercel.json              # Frontend Vercel config
+│
+└── backend branch (Backend)       # 🖥️ Vercel Project #2
+    ├── server.js                 # Express server
+    ├── routes/                   # API routes
+    ├── package.json             # Backend dependencies
+    └── vercel.json              # Backend Vercel config
 ```
 
 ## 🚀 Deployment Steps
 
-### Step 1: Prepare Repository
+### Step 1: Deploy Backend (Express API)
 
-1. Ensure your repository structure matches the above
-2. Copy `.env.example` to `.env` and configure your API keys locally
-3. Test the build process:
+1. **Create Backend Branch**:
    ```bash
-   npm install
-   npm run build
+   # Create and switch to backend branch
+   git checkout -b backend
+   
+   # Move backend files to root
+   cp -r backend/* .
+   rm -rf backend/ frontend/ src/ public/ api/
+   
+   # Commit backend-only files
+   git add .
+   git commit -m "Backend branch for Vercel deployment"
+   git push origin backend
    ```
 
-### Step 2: Deploy to Vercel
+2. **Deploy Backend to Vercel**:
+   - Go to [vercel.com/dashboard](https://vercel.com/dashboard)
+   - Click "New Project"
+   - Import your GitHub repository
+   - **Important**: Select the `backend` branch
+   - Configure as Node.js project
 
-#### Option A: Vercel Dashboard (Recommended)
+3. **Configure Backend Environment Variables**:
+   | Variable | Value | Required |
+   |----------|-------|----------|
+   | `GEMINI_API_KEY` | Your Google Gemini API key | ✅ Yes |
+   | `NODE_ENV` | `production` | ✅ Yes |
+   | `ALLOWED_ORIGINS` | Your frontend URL | ✅ Yes |
 
-1. Go to [vercel.com/dashboard](https://vercel.com/dashboard)
-2. Click "New Project"
-3. Import your GitHub repository
-4. Vercel will auto-detect the configuration from `vercel.json`
-5. Click "Deploy"
+4. **Get Backend URL**: Copy your backend URL (e.g., `https://lexlink-backend.vercel.app`)
 
-#### Option B: Vercel CLI
+### Step 2: Deploy Frontend (React App)
 
-1. Install Vercel CLI:
+1. **Switch to Main Branch**:
    ```bash
-   npm i -g vercel
+   # Return to main branch
+   git checkout main
+   
+   # Clean up - keep only frontend files
+   rm -rf backend/
+   # Frontend files remain in src/, public/, etc.
    ```
 
-2. Deploy from project root:
+2. **Update Frontend Configuration**:
    ```bash
-   vercel
+   # Update API endpoint in environment
+   echo "VITE_API_URL=https://your-backend.vercel.app" > .env.production
    ```
 
-3. Follow the prompts to link to your project
+3. **Deploy Frontend to Vercel**:
+   - Create another Vercel project
+   - Import the same GitHub repository
+   - **Important**: Select the `main` branch
+   - Configure as React/Vite project
 
-### Step 3: Configure Environment Variables
+### Step 3: Configure CORS & Environment
 
-In your Vercel project dashboard:
+1. **Update Backend CORS** (in backend branch):
+   - Add your frontend URL to allowed origins
+   - Ensure proper CORS configuration
 
-1. Go to **Settings** → **Environment Variables**
-2. Add the following variables:
-
-| Variable | Value | Required |
-|----------|-------|----------|
-| `GEMINI_API_KEY` | Your Google Gemini API key | ✅ Yes |
-| `NODE_ENV` | `production` | ⚠️ Recommended |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Google Cloud service account (optional) | ❌ No |
-
-3. Click "Save" and redeploy
-
-### Step 4: Test Deployment
-
-1. Visit your Vercel URL (e.g., `https://your-project.vercel.app`)
-2. Test the health endpoint: `https://your-project.vercel.app/api/health`
-3. Upload a document to test the analysis functionality
-4. Try the translation and text-to-speech features
+2. **Test Integration**:
+   - Visit your frontend URL
+   - Try uploading a document
+   - Verify API calls work across domains
 
 ## 🔧 Configuration Details
 
