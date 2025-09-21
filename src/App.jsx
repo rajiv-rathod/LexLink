@@ -44,7 +44,7 @@ export default function App() {
                     🚀 Upload a document. Get the gist, the gotchas, and what to do next. 
                     <br />
                     <span className="text-gray-600 dark:text-gray-400 font-semibold">
-                      AI-powered analysis in 20+ languages with text-to-speech support.
+                      AI-powered legal document analysis in 20+ languages.
                     </span>
                   </p>
 
@@ -53,7 +53,7 @@ export default function App() {
                     {[
                       { icon: '🤖', text: 'AI Analysis' },
                       { icon: '🌍', text: '20+ Languages' },
-                      { icon: '🔊', text: 'Text-to-Speech' },
+                      { icon: '�', text: 'Risk Assessment' },
                       { icon: '🌙', text: 'Dark Mode' },
                       { icon: '💯', text: 'Free Forever' }
                     ].map((feature, index) => (

@@ -137,22 +137,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
         </div>
       )}
 
-      {/* Audio Player */}
-      {audioData && (
-        <div className="audio-player">
-          <div className="audio-controls">
-            <button onClick={playAudio} disabled={!audioData.audioContent}>
-              {audioData.audioContent ? '▶️ Play Audio Summary' : '🎵 Audio Demo Mode'}
-            </button>
-            {audioData.demoMode && (
-              <span className="demo-text">
-                🌟 Text-to-Speech powered by Google Cloud (Demo Mode)
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="tabs-container">
         {tabs.map(tab => (

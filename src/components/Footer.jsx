@@ -79,8 +79,8 @@ const Footer = () => {
                 <span>Multi-Language Support</span>
               </li>
               <li className="flex items-center space-x-3 hover:text-amber-300 transition-colors cursor-pointer">
-                <span>🔊</span>
-                <span>Text-to-Speech</span>
+                <span>�</span>
+                <span>Risk Assessment</span>
               </li>
               <li className="flex items-center space-x-3 hover:text-amber-300 transition-colors cursor-pointer">
                 <span>🌙</span>

@@ -87,8 +87,8 @@ const Header = () => {
             </span>
             <span className="hidden sm:block text-gray-400">•</span>
             <span className="flex items-center space-x-1 hover:scale-105 transition-transform duration-200">
-              <span className="animate-pulse">🔊</span>
-              <span>Text-to-Speech</span>
+              <span className="animate-pulse">�</span>
+              <span>Risk Assessment</span>
             </span>
             <span className="hidden sm:block text-gray-400">•</span>
             <span className="flex items-center space-x-1 hover:scale-105 transition-transform duration-200">
