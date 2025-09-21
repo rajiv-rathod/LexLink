@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { translateText, checkCompliance, benchmarkDocument } from "../services/api";
 import TranslationPanel from "./TranslationPanel";
-import TextToSpeech from "./TextToSpeech";
 
 export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -83,7 +82,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
     { id: "translate", label: "🌍 Translate & Voice", icon: "🌍" },
     { id: "compliance", label: "✅ Compliance", icon: "✅" },
     { id: "benchmark", label: "📊 Benchmark", icon: "📊" },
-    { id: "accessibility", label: "♿ Accessibility", icon: "♿" },
     { id: "details", label: "📝 Details", icon: "📝" }
   ];
 
@@ -426,60 +424,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
           </div>
         )}
 
-        {activeTab === "accessibility" && (
-          <div className="accessibility-content">
-            <h3>♿ Accessibility Features</h3>
-            <div className="accessibility-tools">
-              <div className="tool-card">
-                <h4>🔊 Audio Summary</h4>
-                <p>Listen to your document analysis with browser-native text-to-speech technology.</p>
-                <div className="text-to-speech-container">
-                  <TextToSpeech 
-                    text={`Document Summary: ${analysis.summary}. 
-                      Key Rights: ${analysis.yourRights?.join(', ')}. 
-                      Key Obligations: ${analysis.yourObligations?.join(', ')}.
-                      Risk Assessment: Overall risk score is ${analysis.riskAssessment?.overallRiskScore} out of 10.`}
-                  />
-                </div>
-              </div>
-
-              <div className="tool-card">
-                <h4>🌐 Multi-Language Support</h4>
-                <p>Translate your document analysis into multiple languages.</p>
-                <div className="language-grid">
-                  {languages.slice(0, 6).map(lang => (
-                    <button
-                      key={lang.code}
-                      onClick={() => handleTranslate(lang.code)}
-                      className={`lang-btn ${language === lang.code ? 'active' : ''}`}
-                      disabled={loading.translate}
-                    >
-                      {lang.name}
-                    </button>
-                  ))}
-                </div>
-                {translation && (
-                  <div className="translation-result">
-                    <h5>Translated Summary:</h5>
-                    <p>{translation.translatedText}</p>
-                    <div className="text-to-speech-container">
-                      <TextToSpeech 
-                        text={translation.translatedText} 
-                        targetLanguage={language}
-                      />
-                    </div>
-                    {translation.demoMode && (
-                      <div className="demo-mode">
-                        🌟 Translation powered by Google Cloud (Demo Mode)
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {activeTab === "details" && (
           <div className="details-content">
             <h3>📝 Technical Details</h3>
@@ -503,7 +447,7 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
             </div>
 
             <div className="gcp-services">
-              <h4>🌟 Powered by AI & Browser Technologies</h4>
+              <h4>🌟 Powered by Google Cloud Platform</h4>
               <div className="services-grid">
                 <div className="service">
                   <span>🤖</span>
@@ -517,13 +461,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
                   <div>
                     <strong>Translation API</strong>
                     <p>Multi-language support</p>
-                  </div>
-                </div>
-                <div className="service">
-                  <span>🔊</span>
-                  <div>
-                    <strong>Web Speech API</strong>
-                    <p>Native browser text-to-speech</p>
                   </div>
                 </div>
                 <div className="service">

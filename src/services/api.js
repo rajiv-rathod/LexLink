@@ -79,21 +79,6 @@ export async function translateText(text, targetLanguage = 'en') {
   return res.json();
 }
 
-export async function generateAudio(text, languageCode = 'en-US') {
-  const res = await fetch(`${API_BASE}/audio`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, languageCode })
-  });
-  
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || `Audio generation failed: ${res.status}`);
-  }
-  
-  return res.json();
-}
-
 export async function checkCompliance(documentText, documentType, jurisdiction = 'US') {
   const res = await fetch(`${API_BASE}/compliance`, {
     method: "POST",

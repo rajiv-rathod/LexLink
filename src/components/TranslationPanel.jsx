@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { translateText } from '../services/api';
 import LanguageSelector from './LanguageSelector';
-import TextToSpeech from './TextToSpeech';
 
 const TranslationPanel = ({ documentText, documentSummary }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('hi'); // Default to Hindi
@@ -82,28 +81,6 @@ const TranslationPanel = ({ documentText, documentSummary }) => {
           <h4 className="font-semibold text-indigo-300">Translated Summary:</h4>
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <p className="text-gray-200 leading-relaxed">{translatedText}</p>
-          </div>
-          
-          {/* Text-to-Speech for Translated Text */}
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <h5 className="font-medium text-indigo-300 mb-3">🔊 Listen to Translation:</h5>
-            <TextToSpeech 
-              text={translatedText}
-              targetLanguage={selectedLanguage}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Text-to-Speech for Original Summary (when no translation yet) */}
-      {!translatedText && (documentSummary || documentText) && (
-        <div className="space-y-3">
-          <h4 className="font-semibold text-indigo-300">🔊 Listen to Original Summary:</h4>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <TextToSpeech 
-              text={documentSummary || documentText.substring(0, 500)}
-              targetLanguage="en"
-            />
           </div>
         </div>
       )}
