@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { translateText, generateAudio, checkCompliance, benchmarkDocument } from "../services/api";
+import { translateText, checkCompliance, benchmarkDocument } from "../services/api";
 import TranslationPanel from "./TranslationPanel";
 import TextToSpeech from "./TextToSpeech";
 
 export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [translation, setTranslation] = useState(null);
-  const [audioData, setAudioData] = useState(null);
   const [compliance, setCompliance] = useState(null);
   const [benchmark, setBenchmark] = useState(null);
   const [loading, setLoading] = useState({});
@@ -38,22 +37,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
       console.error('Translation error:', error);
     } finally {
       setLoading(prev => ({ ...prev, translate: false }));
-    }
-  };
-
-  const handleGenerateAudio = async () => {
-    setLoading(prev => ({ ...prev, audio: true }));
-    try {
-      const textToRead = `Document Summary: ${analysis.summary}. 
-        Key Rights: ${analysis.yourRights?.join(', ')}. 
-        Key Obligations: ${analysis.yourObligations?.join(', ')}.`;
-      
-      const result = await generateAudio(textToRead);
-      setAudioData(result);
-    } catch (error) {
-      console.error('Audio generation error:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, audio: false }));
     }
   };
 
@@ -90,13 +73,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
       console.error('Benchmark error:', error);
     } finally {
       setLoading(prev => ({ ...prev, benchmark: false }));
-    }
-  };
-
-  const playAudio = () => {
-    if (audioData?.audioContent) {
-      const audio = new Audio(`data:audio/mp3;base64,${audioData.audioContent}`);
-      audio.play().catch(err => console.error('Audio playback error:', err));
     }
   };
 
@@ -138,14 +114,6 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
           </select>
           {loading.translate && <span className="loading-spinner">⏳</span>}
         </div>
-
-        <button 
-          onClick={handleGenerateAudio}
-          disabled={loading.audio}
-          className="toolbar-btn"
-        >
-          {loading.audio ? '⏳' : '🔊'} Audio Summary
-        </button>
 
         <button 
           onClick={handleCheckCompliance}
@@ -464,27 +432,15 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
             <div className="accessibility-tools">
               <div className="tool-card">
                 <h4>🔊 Audio Summary</h4>
-                <p>Listen to your document analysis with text-to-speech technology.</p>
-                <button 
-                  onClick={handleGenerateAudio}
-                  disabled={loading.audio}
-                  className="btn btn-secondary"
-                >
-                  {loading.audio ? '⏳ Generating...' : '🔊 Generate Audio'}
-                </button>
-                {audioData && (
-                  <div className="audio-result">
-                    {audioData.audioContent ? (
-                      <button onClick={playAudio} className="btn btn-primary">
-                        ▶️ Play Audio Summary
-                      </button>
-                    ) : (
-                      <div className="demo-mode">
-                        🎵 Audio generation powered by Google Cloud Text-to-Speech (Demo Mode)
-                      </div>
-                    )}
-                  </div>
-                )}
+                <p>Listen to your document analysis with browser-native text-to-speech technology.</p>
+                <div className="text-to-speech-container">
+                  <TextToSpeech 
+                    text={`Document Summary: ${analysis.summary}. 
+                      Key Rights: ${analysis.yourRights?.join(', ')}. 
+                      Key Obligations: ${analysis.yourObligations?.join(', ')}.
+                      Risk Assessment: Overall risk score is ${analysis.riskAssessment?.overallRiskScore} out of 10.`}
+                  />
+                </div>
               </div>
 
               <div className="tool-card">
@@ -506,6 +462,12 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
                   <div className="translation-result">
                     <h5>Translated Summary:</h5>
                     <p>{translation.translatedText}</p>
+                    <div className="text-to-speech-container">
+                      <TextToSpeech 
+                        text={translation.translatedText} 
+                        targetLanguage={language}
+                      />
+                    </div>
                     {translation.demoMode && (
                       <div className="demo-mode">
                         🌟 Translation powered by Google Cloud (Demo Mode)
@@ -541,7 +503,7 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
             </div>
 
             <div className="gcp-services">
-              <h4>🌟 Powered by Google Cloud Platform</h4>
+              <h4>🌟 Powered by AI & Browser Technologies</h4>
               <div className="services-grid">
                 <div className="service">
                   <span>🤖</span>
@@ -560,8 +522,8 @@ export default function EnhancedResultCard({ analysis, selectedLanguage = 'en' }
                 <div className="service">
                   <span>🔊</span>
                   <div>
-                    <strong>Text-to-Speech</strong>
-                    <p>Audio accessibility</p>
+                    <strong>Web Speech API</strong>
+                    <p>Native browser text-to-speech</p>
                   </div>
                 </div>
                 <div className="service">

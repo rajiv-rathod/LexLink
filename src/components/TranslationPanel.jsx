@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { translateText, generateAudio } from '../services/api';
+import { translateText } from '../services/api';
 import LanguageSelector from './LanguageSelector';
+import TextToSpeech from './TextToSpeech';
 
 const TranslationPanel = ({ documentText, documentSummary }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('hi'); // Default to Hindi
   const [translatedText, setTranslatedText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
   const [error, setError] = useState('');
 
   const handleTranslate = async () => {
@@ -33,39 +32,6 @@ const TranslationPanel = ({ documentText, documentSummary }) => {
       console.error('Translation error:', err);
     } finally {
       setIsTranslating(false);
-    }
-  };
-
-  const handleGenerateAudio = async () => {
-    const textForAudio = translatedText || documentSummary || documentText.substring(0, 500);
-    
-    if (!textForAudio) {
-      setError('No text available for audio generation');
-      return;
-    }
-
-    setIsGeneratingAudio(true);
-    setError('');
-    
-    try {
-      const result = await generateAudio(textForAudio, selectedLanguage);
-      
-      if (result.audioContent) {
-        // Create audio blob from base64
-        const audioBlob = new Blob(
-          [Uint8Array.from(atob(result.audioContent), c => c.charCodeAt(0))],
-          { type: 'audio/mp3' }
-        );
-        const url = URL.createObjectURL(audioBlob);
-        setAudioUrl(url);
-      } else if (result.demoMode) {
-        setError('Audio generation in demo mode. Full TTS requires Google Cloud setup.');
-      }
-    } catch (err) {
-      setError(err.message || 'Audio generation failed');
-      console.error('Audio generation error:', err);
-    } finally {
-      setIsGeneratingAudio(false);
     }
   };
 
@@ -101,24 +67,6 @@ const TranslationPanel = ({ documentText, documentSummary }) => {
             </>
           )}
         </button>
-
-        <button
-          onClick={handleGenerateAudio}
-          disabled={isGeneratingAudio || (!translatedText && !documentSummary)}
-          className="btn btn-secondary flex items-center gap-2"
-        >
-          {isGeneratingAudio ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              <span>Generating...</span>
-            </>
-          ) : (
-            <>
-              <span>🔊</span>
-              <span>Generate Audio</span>
-            </>
-          )}
-        </button>
       </div>
 
       {/* Error Display */}
@@ -135,21 +83,27 @@ const TranslationPanel = ({ documentText, documentSummary }) => {
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <p className="text-gray-200 leading-relaxed">{translatedText}</p>
           </div>
+          
+          {/* Text-to-Speech for Translated Text */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <h5 className="font-medium text-indigo-300 mb-3">🔊 Listen to Translation:</h5>
+            <TextToSpeech 
+              text={translatedText}
+              targetLanguage={selectedLanguage}
+            />
+          </div>
         </div>
       )}
 
-      {/* Audio Player */}
-      {audioUrl && (
+      {/* Text-to-Speech for Original Summary (when no translation yet) */}
+      {!translatedText && (documentSummary || documentText) && (
         <div className="space-y-3">
-          <h4 className="font-semibold text-indigo-300">Audio Playback:</h4>
+          <h4 className="font-semibold text-indigo-300">🔊 Listen to Original Summary:</h4>
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <audio controls className="w-full">
-              <source src={audioUrl} type="audio/mp3" />
-              Your browser does not support the audio element.
-            </audio>
-            <p className="text-sm text-gray-400 mt-2">
-              🎵 Audio generated in {selectedLanguage.toUpperCase()}
-            </p>
+            <TextToSpeech 
+              text={documentSummary || documentText.substring(0, 500)}
+              targetLanguage="en"
+            />
           </div>
         </div>
       )}
